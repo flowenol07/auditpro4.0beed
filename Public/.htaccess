@@ -1,0 +1,14 @@
+Options -MultiViews
+RewriteEngine On
+
+#RewriteBase /public
+
+# Ignore assets Directory
+RewriteCond %{REQUEST_URI} !(/resources)
+RewriteCond %{REQUEST_URI} !(/images)
+RewriteCond %{REQUEST_URI} !(/docs)
+
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+
+RewriteRule ^(.+)$ index.php?url=$1 [QSA,L]

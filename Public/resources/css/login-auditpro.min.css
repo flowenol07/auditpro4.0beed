@@ -1,0 +1,54 @@
+#passwordContainer {
+    position: relative;
+}
+
+#passwordContainer #password { padding-right: 40px !important; }
+
+#passwordContainer .show-pass-text, 
+#passwordContainer .hide-pass-text {
+    display: inline-block;
+    height: 24px;
+    width: 24px;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 8px;
+    background-image: url(../img/show-hide-password.png);
+    background-repeat: no-repeat;
+    background-size: auto 24px;
+    cursor: pointer;
+    transition: all 0.2s ease-in;
+}
+
+#passwordContainer .show-pass-text { background-position: -24px 0; }
+
+#auditproInfoContainer {
+    /* background-repeat:no-repeat; */
+    background-attachment:fixed;
+    /* background-size: 170% auto; */
+}
+
+#auditproInfoContainer { 
+    height: 300px; 
+    padding-top: 56px;
+}
+
+#auditproLoginContainer { 
+    position: absolute;
+    top: 140px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-repeat:no-repeat;
+    animation: slideUp 0.5s ease forwards;
+}
+
+@keyframes slideUp {
+    from {
+        top: 160px;
+        opacity: 0; 
+    }
+    to {
+        top: 140px; 
+        opacity: 1; 
+    }
+}

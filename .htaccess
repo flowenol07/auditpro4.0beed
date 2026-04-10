@@ -1,0 +1,6 @@
+RewriteEngine On
+
+RewriteRule ^$ Public/ [L]
+RewriteRule (.*) Public/$1 [L]
+
+#RewriteRule (.*)$ Public/$1 [L]
