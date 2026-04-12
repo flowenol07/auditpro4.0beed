@@ -11,6 +11,7 @@ use Core\SiteUrls;
     $auditCompletedData = [];
     $auditCompliancePending = [];
     $auditReviewPendingData = [];
+    $auditRoReviewPendingData = []; // Added for RO Review
     $lastAuditAssesData = [];
     $auditNotStartedData = [];
     
@@ -36,6 +37,8 @@ use Core\SiteUrls;
                         $auditCompliancePending[$cDataId][$cAssesId] = $cAssesDetails;
                     elseif($cAssesDetails -> audit_status_id == 2 || $cAssesDetails -> audit_status_id == 5)
                         $auditReviewPendingData[$cDataId][$cAssesId] = $cAssesDetails;
+                    elseif($cAssesDetails -> audit_status_id == 15) // Added for RO Review
+                        $auditRoReviewPendingData[$cDataId][$cAssesId] = $cAssesDetails;
                 }
             }
         }
@@ -60,6 +63,8 @@ use Core\SiteUrls;
 
                         <p><span class="info">Compliance Pending :</span> ' . ((isset($cDataDetails -> year_data) && array_key_exists($cDataId, $auditCompliancePending)) ? sizeof($auditCompliancePending[$cDataId]) : 0). '</p>
 
+                        <p><span class="info">RO Review Pending :</span> ' . ((isset($cDataDetails -> year_data) && array_key_exists($cDataId, $auditRoReviewPendingData)) ? sizeof($auditRoReviewPendingData[$cDataId]) : 0). '</p>
+
                         <p><span class="info">Review Pending :</span> ' . ((isset($cDataDetails -> year_data) && array_key_exists($cDataId, $auditReviewPendingData)) ? sizeof($auditReviewPendingData[$cDataId]) : 0). '</p>
 
                         <p><span class="info">Audit Completed :</span> ' . ((isset($cDataDetails -> year_data) && array_key_exists($cDataId, $auditCompletedData)) ? sizeof($auditCompletedData[$cDataId]) : 0). '</p>
@@ -82,5 +87,3 @@ use Core\SiteUrls;
     endforeach; 
     ?>    
     </div>
-
-    
