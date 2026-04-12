@@ -438,7 +438,6 @@ defined( 'COMPLIANCE_PRO_ARRAY' ) ?: define('COMPLIANCE_PRO_ARRAY', array(
 	]
 ));
 
-define("OPENAI_API_KEY", getenv("OPENAI_API_KEY") ?: "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"); //
 
 // Register Autoloader
 function laoderFunc( $class_name ){
