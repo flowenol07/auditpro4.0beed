@@ -1004,6 +1004,33 @@ if(!function_exists('generate_assesment_top_markup'))
                         $mrk_str .= '</div>' . "\n";
                     $mrk_str .= '</div>' . "\n";
 
+                    // for ro review status
+                    if(array_key_exists('16', $GLOBALS['userTypesArray']))
+                    {
+                        $mrk_str .= '<div class="'. $col . ' assess-timeline-container">' . "\n";
+                            $mrk_str .= '<span class="assess-timeline">'. $assessTimelineCnt++ .'</span>' . "\n";
+                            $mrk_str .= '<div class="border h-100 d-flex align-items-center justify-content-center '. ( $assessmentData -> audit_status_id == 5 ? 'bg-success text-white border-success' : ( in_array($assessmentData -> audit_status_id, [15]) ? 'bg-light-gray' : '' ) ) .' text-center">' . "\n";
+
+                                $mrk_str .=  '<div>' . "\n";
+
+                                $mrk_str .= '<p class="font-sm mb-0">RO REVIEW STATUS</p>' . "\n";
+
+                                $tempStatus = string_operations('Completed', 'upper');
+
+                                if(in_array($assessmentData -> audit_status_id, [15]))
+                                    $tempStatus = ASSESMENT_TIMELINE_ARRAY[ 15 ]['title'];
+
+                                if(in_array($assessmentData->audit_status_id, [6, 15])) {
+                                    $tempStatus = '<span class="text-light-gray">' . ERROR_VARS['notAvailable'] . '</span>';
+                                }
+                                $mrk_str .= '<p class="font-bold mb-0">'. $tempStatus .'</p>' . "\n";
+
+                                $mrk_str .=  '</div>' . "\n";
+
+                            $mrk_str .= '</div>' . "\n";
+                        $mrk_str .= '</div>' . "\n";
+                    }
+
                     // for review compliance
                     if(array_key_exists('4', $GLOBALS['userTypesArray']))
                     {
@@ -1020,8 +1047,7 @@ if(!function_exists('generate_assesment_top_markup'))
                                 if(in_array($assessmentData -> audit_status_id, [5]))
                                     $tempStatus = ASSESMENT_TIMELINE_ARRAY[ 5 ]['title'];
 
-                                if( !($assessmentData -> audit_status_id > 5) ) $tempStatus = '<span class="text-light-gray">' . ERROR_VARS['notAvailable'] . '</span>';
-
+                                if( !($assessmentData -> audit_status_id > 15) ) $tempStatus = '<span class="text-light-gray">' . ERROR_VARS['notAvailable'] . '</span>';
                                 $mrk_str .= '<p class="font-bold mb-0">'. $tempStatus .'</p>' . "\n";
 
                                 $mrk_str .=  '</div>' . "\n";
@@ -1029,6 +1055,8 @@ if(!function_exists('generate_assesment_top_markup'))
                             $mrk_str .= '</div>' . "\n";
                         $mrk_str .= '</div>' . "\n";
                     }
+
+                    
 
                 $mrk_str .= '</div>' . "\n";
 

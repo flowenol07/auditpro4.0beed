@@ -32,7 +32,7 @@ defined( 'REPORTS_VIEW' ) ?: define('REPORTS_VIEW', APP_VIEWS . DS . 'reports');
 defined( 'PUBLIC_ROOT' ) ?: define('PUBLIC_ROOT', dirname(__DIR__) . DS . 'Public');
 
 // Public URL
-defined( 'HOST' ) ?: define('HOST', 'http://192.168.31.16/');
+defined( 'HOST' ) ?: define('HOST', 'http://192.168.1.33/');
 defined( 'URL' ) ?: define('URL', HOST . 'auditpro4.0beed/');
 defined( 'PUBLIC_JS' ) ?: define('PUBLIC_JS', URL . 'js/');
 defined( 'IMAGES' ) ?: define('IMAGES', URL . 'images/');
@@ -346,10 +346,10 @@ defined( 'EVIDENCE_UPLOAD' ) ?: define('EVIDENCE_UPLOAD', array(
 	'upload_folder_create' => 'evi_audit_',
 	'checkbox_text' => 'Evidence to be uploaded',
 	'database' => array(
-		'db_host' => '20.197.10.226:3306',
+		'db_host' => 'localhost:3306',
 		'db_user' => 'root',
-		'db_pass' => 'Kred@Pool123',  
-		'db_name' => 'riskanalyser_dy_evidence_ndvs_2025'
+		'db_pass' => '',  
+		'db_name' => 'evidence_db'  // Add a database name here
 	)
 ));
 
@@ -438,6 +438,7 @@ defined( 'COMPLIANCE_PRO_ARRAY' ) ?: define('COMPLIANCE_PRO_ARRAY', array(
 	]
 ));
 
+define("OPENAI_API_KEY", getenv("OPENAI_API_KEY") ?: "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"); //
 
 // Register Autoloader
 function laoderFunc( $class_name ){
