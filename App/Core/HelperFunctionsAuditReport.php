@@ -1015,40 +1015,40 @@ if(!function_exists('generate_report_td_markup'))
         // RO COLUMNS DISPLAY - For NON-RO users (Branch View Only)
         // =============================================
         // RO COLUMNS DISPLAY - For NON-RO users (Both Branch and Reviewers can view)
-if( in_array($FILTER_TYPE, ['REARP', 'RECOM', 'RVAU', 'RVCOM']) && !$is_ro_user )
-{   
-    // Display RO Review Status as text
-    if( $FILTER_TYPE == 'REARP' || $FILTER_TYPE == 'RVAU' ) {
-        $roStatusId = (isset($cAnsDetails->ro_audit_status_id) && !is_null($cAnsDetails->ro_audit_status_id) && $cAnsDetails->ro_audit_status_id != '') 
-            ? $cAnsDetails->ro_audit_status_id 
-            : 2;
-        
-        $roStatusText = array_key_exists($roStatusId, AUDIT_STATUS_ARRAY['compliance_review_action']) 
-            ? AUDIT_STATUS_ARRAY['compliance_review_action'][$roStatusId] 
-            : 'Pending RO Review';
-        
-        $str .= '<td>' . $roStatusText . '</td>';
-    } else {
-        $roStatusId = (isset($cAnsDetails->ro_compliance_status_id) && !is_null($cAnsDetails->ro_compliance_status_id) && $cAnsDetails->ro_compliance_status_id != '') 
-            ? $cAnsDetails->ro_compliance_status_id 
-            : 2;
-        
-        $roStatusText = array_key_exists($roStatusId, AUDIT_STATUS_ARRAY['compliance_review_action']) 
-            ? AUDIT_STATUS_ARRAY['compliance_review_action'][$roStatusId] 
-            : 'Pending RO Review';
-        
-        $str .= '<td>' . $roStatusText . '</td>';
-    }
+        if( in_array($FILTER_TYPE, ['REARP', 'RECOM', 'RVAU', 'RVCOM']) && !$is_ro_user )
+        {   
+            // Display RO Review Status as text
+            if( $FILTER_TYPE == 'REARP' || $FILTER_TYPE == 'RVAU' ) {
+                $roStatusId = (isset($cAnsDetails->ro_audit_status_id) && !is_null($cAnsDetails->ro_audit_status_id) && $cAnsDetails->ro_audit_status_id != '') 
+                    ? $cAnsDetails->ro_audit_status_id 
+                    : 2;
+                
+                $roStatusText = array_key_exists($roStatusId, AUDIT_STATUS_ARRAY['compliance_review_action']) 
+                    ? AUDIT_STATUS_ARRAY['compliance_review_action'][$roStatusId] 
+                    : 'Pending RO Review';
+                
+                $str .= '<td>' . $roStatusText . '</td>';
+            } else {
+                $roStatusId = (isset($cAnsDetails->ro_compliance_status_id) && !is_null($cAnsDetails->ro_compliance_status_id) && $cAnsDetails->ro_compliance_status_id != '') 
+                    ? $cAnsDetails->ro_compliance_status_id 
+                    : 2;
+                
+                $roStatusText = array_key_exists($roStatusId, AUDIT_STATUS_ARRAY['compliance_review_action']) 
+                    ? AUDIT_STATUS_ARRAY['compliance_review_action'][$roStatusId] 
+                    : 'Pending RO Review';
+                
+                $str .= '<td>' . $roStatusText . '</td>';
+            }
 
-    // Display RO Comment as text
-    $roReviewerComment = (isset($cAnsDetails->ro_reviewer_comment) && !is_null($cAnsDetails->ro_reviewer_comment) && trim($cAnsDetails->ro_reviewer_comment) != '') 
-        ? trim_str($cAnsDetails->ro_reviewer_comment) 
-        : '-';
-    
-    $str .= '<td>' . $roReviewerComment . '<td>';
+            // Display RO Comment as text
+            $roReviewerComment = (isset($cAnsDetails->ro_reviewer_comment) && !is_null($cAnsDetails->ro_reviewer_comment) && trim($cAnsDetails->ro_reviewer_comment) != '') 
+                ? trim_str($cAnsDetails->ro_reviewer_comment) 
+                : '-';
+            
+            $str .= '<td>' . $roReviewerComment . '<td>';
 
-    unset($roReviewerComment, $roStatusText);
-}
+            unset($roReviewerComment, $roStatusText);
+        }
 
         // =============================================
         // RO SPECIFIC COLUMNS - For RO users only (Editable)

@@ -667,6 +667,7 @@ class SiteUrls {
 
                 //prathamesh reports
                 'risk-type-wise-risk-weightage-report' => 'riskTypeWiseRiskWeightageReport',
+                'ro-officer-review-report' => 'roOfficerReviewReport',
             ],
         ],
 
@@ -1653,7 +1654,17 @@ class SiteUrls {
             'breadcrumb' => array('dashboard', 'reports'),
             'accessControl' => array('2','4','16'),
         ],
-        
+        'roOfficerReviewReport' => [
+            'id' => 'roOfficerReviewReport',
+            'pageTitle' => 'RO Officer Review Report',
+            'pageHeading' => 'RO Officer Review Report',
+            'controller' => 'Reports',
+            'controllerDir' => 'Reports',
+            'url' => 'reports/ro-officer-review-report',
+            'viewDir' => 'reports/ro-officer-review-report/',
+            'breadcrumb' => array('dashboard', 'reports'),
+            'accessControl' => array('2','4','16'),
+        ],
 
     );
 

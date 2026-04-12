@@ -76,7 +76,7 @@ class Reports extends Controller  {
                 /*'internalAssesmentReport',*/'performanceRiskWeightageReport', 'performanceRiskWeightageReportCategoryWise', 'RBIAPerformanceRiskWeightageReportAllUnits', 
                 
                 // Sahil Reports
-                'categoryWiseRiskWeightageReports', 'borderAriaWiseRiskWeightageReport', 'riskCategorySummaryReport', 'questionWiseConsolidateSummary', 'typewiseRiskWeightageReport', 'riskTrendSummaryReport','riskTypeWiseRiskWeightageReport', /*'riskTredSummaryAnalysis'*/]
+                'categoryWiseRiskWeightageReports', 'borderAriaWiseRiskWeightageReport', 'riskCategorySummaryReport', 'questionWiseConsolidateSummary', 'typewiseRiskWeightageReport', 'riskTrendSummaryReport','riskTypeWiseRiskWeightageReport','roOfficerReviewReport', /*'riskTredSummaryAnalysis'*/]
             ];
         }
         else
@@ -4716,6 +4716,30 @@ class Reports extends Controller  {
             'request' => $this -> request,
         ]);
     }
+    public function roOfficerReviewReport()
+    {
+        $this -> generateMe('roOfficerReviewReport');
+
+        $this -> data['filter_type'] = 'ACP';
+
+        // method call
+        if($this -> empType == 3)
+        {
+            $this -> auditId = $this -> getAuditId($this -> empId);
+
+            $this -> auditReportFindData(1,false,1,$this -> auditId);
+        }
+        else
+            $this -> auditReportFindData(1);
+
+        $this -> data['filter_type'] = 'CRPWC';
+
+        //load view // helper function call
+        return return2View($this, $this -> me -> viewDir . 'index', [
+            'data' => $this -> data,
+            'request' => $this -> request,
+        ]);
+    }       
     
 }
 
