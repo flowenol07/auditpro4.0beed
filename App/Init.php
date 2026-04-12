@@ -349,7 +349,7 @@ defined( 'EVIDENCE_UPLOAD' ) ?: define('EVIDENCE_UPLOAD', array(
 		'db_host' => 'localhost:3306',
 		'db_user' => 'root',
 		'db_pass' => '',  
-		'db_name' => 'evidence_db'  // Add a database name here
+		'db_name' => 'evidence_db'
 	)
 ));
 
@@ -437,6 +437,7 @@ defined( 'COMPLIANCE_PRO_ARRAY' ) ?: define('COMPLIANCE_PRO_ARRAY', array(
 		'com_asses_dir_name' => 'doc_com_',
 	]
 ));
+
 
 // Register Autoloader
 function laoderFunc( $class_name ){
