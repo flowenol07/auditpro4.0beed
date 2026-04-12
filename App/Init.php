@@ -438,7 +438,6 @@ defined( 'COMPLIANCE_PRO_ARRAY' ) ?: define('COMPLIANCE_PRO_ARRAY', array(
 	]
 ));
 
-
 // Register Autoloader
 function laoderFunc( $class_name ){
 	// echo '<br />' . $class_name . '<br />';
