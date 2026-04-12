@@ -25,13 +25,15 @@ elseif( array_key_exists('data_array', $data['data']) && is_array($data['data'][
         echo '<style>
 
             .audit-report-table > tbody > tr > th:nth-child(1), .audit-report-table > tbody > tr > td:nth-child(1) { width:5% }
-            .audit-report-table > tbody > tr > th:nth-child(2), .audit-report-table > tbody > tr > td:nth-child(2) { width:31% }
+            .audit-report-table > tbody > tr > th:nth-child(2), .audit-report-table > tbody > tr > td:nth-child(2) { width:25% }
             .audit-report-table > tbody > tr > th:nth-child(3), .audit-report-table > tbody > tr > td:nth-child(3) { width:10% }
             .audit-report-table > tbody > tr > th:nth-child(4), .audit-report-table > tbody > tr > td:nth-child(4) { width:10% }
-            .audit-report-table > tbody > tr > th:nth-child(5), .audit-report-table > tbody > tr > td:nth-child(5) { width:20% }
-            .audit-report-table > tbody > tr > th:nth-child(6), .audit-report-table > tbody > tr > td:nth-child(6) { width:8% }
-            .audit-report-table > tbody > tr > th:nth-child(7), .audit-report-table > tbody > tr > td:nth-child(7) { width:8% }
-            .audit-report-table > tbody > tr > th:nth-child(8), .audit-report-table > tbody > tr > td:nth-child(8) { width:8%; }
+            .audit-report-table > tbody > tr > th:nth-child(5), .audit-report-table > tbody > tr > td:nth-child(5) { width:15% }
+            .audit-report-table > tbody > tr > th:nth-child(6), .audit-report-table > tbody > tr > td:nth-child(6) { width:7% }
+            .audit-report-table > tbody > tr > th:nth-child(7), .audit-report-table > tbody > tr > td:nth-child(7) { width:7% }
+            .audit-report-table > tbody > tr > th:nth-child(8), .audit-report-table > tbody > tr > td:nth-child(8) { width:8% }
+            .audit-report-table > tbody > tr > th:nth-child(9), .audit-report-table > tbody > tr > td:nth-child(9) { width:8% }
+            .audit-report-table > tbody > tr > th:nth-child(10), .audit-report-table > tbody > tr > td:nth-child(10) { width:10% }
 
             .audit-report-table > tbody > tr > td[colspan] { width: 100% !important; }
             .audit-report-table { font-size: 13px }
@@ -39,7 +41,8 @@ elseif( array_key_exists('data_array', $data['data']) && is_array($data['data'][
         </style>';
 
         echo '<div class="">' . "\n";
-            echo generate_table_markup($data, $data['data']['data_array'], $data['data']['filter_type']);
+            // Use the RO report generator function
+            echo generate_ro_comment_report($data, $data['data']['data_array'], $data['data']['filter_type']);
         echo '</div>' . "\n";
 
     echo '</div>' . "\n";

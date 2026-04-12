@@ -2150,4 +2150,296 @@ if(!function_exists('check_menu_data_has_carry_forward'))
     }
 }
 
+if(!function_exists('generate_ro_comment_report'))
+{
+    /**
+     * Generate RO Comment Report with RO review status and comments
+     * This function reuses existing generate_table_markup but adds RO columns
+     * 
+     * @param array $data - The main data array containing assessment data
+     * @param array $dataArray - The data array with answers
+     * @param string $filterType - Filter type (should be 'CRPWC' for RO report)
+     * @param bool $branchHeader - Whether to show branch header
+     * @param object $assesArray - Assessment details
+     * @return string - HTML markup for the report
+     */
+    function generate_ro_comment_report($data, $dataArray, $filterType = 'CRPWC', $branchHeader = 0, $assesArray = [])
+    {
+        // Set the filter type to CRPWC (Compliance Report With Comment)
+        $filterType = 'CRPWC';
+        
+        // Calculate colspan for the table (9 columns including RO columns)
+        $colspan = 9;
+        
+        $mrk_str = '';
+        
+        // Generate branch header if needed
+        if($branchHeader && isset($assesArray->audit_unit_id) && isset($data['data']['audit_unit_data'][$assesArray->audit_unit_id]))
+        {
+            $mrk_str .= '<h4 class="text-center"><span class="font-medium mb-1">Branch: <u>'. $data['data']['audit_unit_data'][$assesArray->audit_unit_id]->combined_name .'</u></span></h4>' . "\n";
+            $mrk_str .= '<p class="text-center mb-2">Period: '. $assesArray->assesment_period_from . ' to ' . $assesArray->assesment_period_to . '</p>' . "\n";
+        }
+        
+        // Start the main table
+        $mrk_str .= '<table class="table audit-report-table table-bordered mb-4">' . "\n";
+        
+        foreach($dataArray['ans_data'] as $cMenuId => $cMenuDetails)
+        {            
+            $mrk_str .= '<tr><th colspan="'. $colspan .'" class="text-primary"><u>MENU: ' . "\n";
+            $mrk_str .= string_operations((is_object($cMenuDetails['menu']) ? $cMenuDetails['menu']->name : ERROR_VARS['notFound']), 'upper') . '</u>';
+            $mrk_str .= '</th></tr>' . "\n";
+            
+            // Check for carry forward
+            if(check_carry_forward_strict() && $cMenuId == CARRY_FORWARD_ARRAY['id'])
+            {
+                if(isset($cMenuDetails['ans_data']->annex) && is_array($cMenuDetails['ans_data']->annex) && sizeof($cMenuDetails['ans_data']->annex) > 0)
+                {
+                    $mrk_str .= generate_ro_display_questions_markup($data, [
+                        CARRY_FORWARD_ARRAY['id'] => [
+                            'header' => (object)['id' => CARRY_FORWARD_ARRAY['id'] . '_header', 'name' => CARRY_FORWARD_ARRAY['title']],
+                            'questions' => [CARRY_FORWARD_ARRAY['id'] => $cMenuDetails['ans_data']]
+                        ]
+                    ], $dataArray, $colspan, $filterType);
+                }
+                else
+                {
+                    $mrk_str .= '<tr><td colspan="'. $colspan .'" class="text-danger">Error: Carry forward points data not found</td></tr>' . "\n";
+                }
+            }
+            else
+            {
+                foreach($cMenuDetails['category'] as $cCatId => $cCatDetails)
+                {
+                    $mrk_str .= '<tr><td colspan="'. $colspan .'" class="font-medium lead">' . "\n";
+                    $mrk_str .= '<u>' . string_operations(('Category: ' . (is_object($cCatDetails) ? $cCatDetails->name : ERROR_VARS['notFound'])), 'upper') . '</u>';
+                    $mrk_str .= '</td></tr>' . "\n";
+                    
+                    if(is_object($cCatDetails) && isset($cCatDetails->dump))
+                    {
+                        foreach($cCatDetails->dump as $cDumpId => $cDumpQuestions)
+                        {
+                            $cAccDetailsBool = false;
+                            
+                            if(array_key_exists($cDumpId, $dataArray[$cCatDetails->dump_table]))
+                                $cAccDetailsBool = true;
+                            
+                            $mrk_str .= '<tr><td colspan="'. $colspan .'" style="background-color: #f6f6f6">' . "\n";
+                            $mrk_str .= '<table class="table table-sm table-bordered mb-0">' . "\n";
+                            
+                            if($cAccDetailsBool)
+                            {
+                                $cAccDetailsBool = $dataArray[$cCatDetails->dump_table][$cDumpId];
+                                $mrk_str .= generate_account_details_markup($cAccDetailsBool, $cCatDetails->dump_table);
+                            }
+                            else
+                            {
+                                $mrk_str .= '<tr><th colspan="3">Account Details:</th></table>';
+                                $mrk_str .= '<tr><td colspan="3">Error: Account Details Not Found!</td></tr>';
+                            }
+                            
+                            $mrk_str .= '</table>' . "\n";
+                            $mrk_str .= '</td></tr>' . "\n";
+                            
+                            // Generate questions with RO columns
+                            $mrk_str .= generate_ro_display_questions_markup($data, $cDumpQuestions, $dataArray, $colspan, $filterType);
+                        }
+                    }
+                    else
+                    {
+                        // Generate questions with RO columns
+                        $mrk_str .= generate_ro_display_questions_markup($data, $cCatDetails->questions, $dataArray, $colspan, $filterType);
+                    }
+                }
+            }
+        }
+        
+        $mrk_str .= '</table>' . "\n";
+        
+        return $mrk_str;
+    }
+}
+
+if(!function_exists('generate_ro_display_questions_markup'))
+{
+    /**
+     * Generate questions markup with RO columns for display (read-only)
+     * Reuses existing functions but adds RO columns specifically
+     * 
+     * @param array $data - Main data array
+     * @param array $questionsArray - Questions to display
+     * @param array $dataArray - Data array with answers
+     * @param int $colspan - Column span for the table
+     * @param string $FILTER_TYPE - Filter type
+     * @return string - HTML markup
+     */
+    function generate_ro_display_questions_markup($data, $questionsArray, $dataArray, $colspan, $FILTER_TYPE = 'CRPWC')
+    {
+        $str = '';
+        $checkCF = check_carry_forward_strict();
+        
+        foreach($questionsArray as $cHeaderId => $cHeaderDetails)
+        {
+            $checkCF = ($checkCF && $cHeaderId == CARRY_FORWARD_ARRAY['id']);
+            
+            // Header row
+            $str .= '<tr><td colspan="'. $colspan .'" class="bg-light-gray font-medium"><u>'. strtoupper('Header: ' . (is_object($cHeaderDetails['header']) ? $cHeaderDetails['header']->name : ERROR_VARS['notFound'])) .'</u></td></tr>' . "\n";
+            
+            // Column headers
+            $str .= '<tr>';
+            $str .= '<th class="text-center">#</th>';
+            $str .= '<th>Question</th>';
+            $str .= '<th>Audit Point</th>';
+            $str .= '<th>Audit Comment</th>';
+            $str .= '<th>Compliance</th>';
+            $str .= '<th>RO Comment</th>';
+            $str .= '<th>Business Risk</th>';
+            $str .= '<th>Control Risk</th>';
+            $str .= '<th>Risk Type</th>';
+            $str .= '</tr>';
+            
+            $srNo = 1;
+            
+            foreach($cHeaderDetails['questions'] as $cQueId => $cQueDetails)
+            {
+                // Trim data
+                $cQueDetails->question = trim_str(urldecode_data($cQueDetails->question ?? ''));
+                $cQueDetails->answer_given = trim_str(urldecode_data($cQueDetails->answer_given ?? ''));
+                $cQueDetails->audit_comment = trim_str(urldecode_data($cQueDetails->audit_comment ?? ''));
+                $cQueDetails->audit_commpliance = trim_str(urldecode_data($cQueDetails->audit_commpliance ?? ''));
+                
+                $str .= '<tr>' . "\n";
+                
+                // SR NO
+                $str .= '<td class="text-center">'. $srNo++ .'</td>' . "\n";
+                
+                // Question
+                if($checkCF)
+                    $str .= '<td>'. $cHeaderDetails['header']->name .'</td>' . "\n";
+                else
+                    $str .= '<td>'. $cQueDetails->question .'</td>' . "\n";
+                
+                // Audit Point (Answer Given)
+                if(!$checkCF)
+                {
+                    if($cQueDetails->option_id == '5' && isset($dataArray['subset_master'][$cQueDetails->answer_given]))
+                        $str .= '<td>'. string_operations($dataArray['subset_master'][$cQueDetails->answer_given]->name, 'upper') .'</td>';
+                    else
+                        $str .= '<td>'. string_operations((($cQueDetails->option_id == '4' && !empty($cQueDetails->annexure_id) && $cQueDetails->answer_given == $cQueDetails->annexure_id) ? AS_PER_ANNEXURE : $cQueDetails->answer_given), 'upper') .'</td>';
+                }
+                else
+                    $str .= '<td></td>';
+                
+                // Audit Comment
+                $str .= '<td>'. (!empty($cQueDetails->audit_comment) ? string_operations($cQueDetails->audit_comment, 'comma_space') : '') .'</td>' . "\n";
+                
+                // Compliance
+                $str .= '<td>'. string_operations($cQueDetails->audit_commpliance, 'comma_space') .'</td>' . "\n";
+                // RO Comment
+                $roComment = '-';
+                if(isset($cQueDetails->ro_reviewer_comment) && !empty(trim($cQueDetails->ro_reviewer_comment)))
+                {
+                    $roComment = string_operations(trim($cQueDetails->ro_reviewer_comment), 'upper');
+                }
+                $str .= '<td>' . $roComment . '</td>';
+                
+                // Business Risk
+                $str .= '<td>'. (array_key_exists($cQueDetails->business_risk ?? 0, RISK_PARAMETERS_ARRAY) ? RISK_PARAMETERS_ARRAY[$cQueDetails->business_risk]['title'] : '-') .'</td>';
+                
+                // Control Risk
+                $str .= '<td>'. (array_key_exists($cQueDetails->control_risk ?? 0, RISK_PARAMETERS_ARRAY) ? RISK_PARAMETERS_ARRAY[$cQueDetails->control_risk]['title'] : '-') .'</td>';
+                
+                // Risk Type
+                $riskType = '-';
+                if(isset($data['data']['risk_category_data']) && is_array($data['data']['risk_category_data']))
+                {
+                    if(isset($cQueDetails->risk_category_id) && array_key_exists($cQueDetails->risk_category_id, $data['data']['risk_category_data']))
+                        $riskType = string_operations((is_object($data['data']['risk_category_data'][$cQueDetails->risk_category_id]) ? $data['data']['risk_category_data'][$cQueDetails->risk_category_id]->risk_category : $data['data']['risk_category_data'][$cQueDetails->risk_category_id]), 'upper');
+                    elseif(isset($cQueDetails->risk_cat_id) && array_key_exists($cQueDetails->risk_cat_id, $data['data']['risk_category_data']))
+                        $riskType = string_operations((is_object($data['data']['risk_category_data'][$cQueDetails->risk_cat_id]) ? $data['data']['risk_category_data'][$cQueDetails->risk_cat_id]->risk_category : $data['data']['risk_category_data'][$cQueDetails->risk_cat_id]), 'upper');
+                }
+                $str .= '<td>' . $riskType . '</td>';
+                
+                
+                $str .= '</tr>' . "\n";
+            }
+        }
+        
+        return $str;
+    }
+}
+
+if(!function_exists('generate_account_details_markup'))
+{
+    /**
+     * Generate account details markup for the report
+     * 
+     * @param object $accountDetails - Account details object
+     * @param string $dumpTable - Type of account (dump_advances or dump_deposits)
+     * @return string - HTML markup
+     */
+    function generate_account_details_markup($accountDetails, $dumpTable)
+    {
+        $str = '';
+        
+        $str .= '<tr><th colspan="3" class="text-primary px-3">Account Details: '. trim_str($accountDetails->account_holder_name) .'</th></tr>';
+        
+        // Common data for both tables
+        $str .= '<tr>';
+        $str .= '<td class="px-3"><span class="font-medium">Branch Name:</span> '. string_operations(($accountDetails->audit_unit_name != 'NA' ? $accountDetails->audit_unit_name : ERROR_VARS['notFound']), 'upper') .' (BR. CODE: '. ($accountDetails->audit_unit_code != 'NA' ? $accountDetails->audit_unit_code : ERROR_VARS['notFound']) .')</td>';
+        $str .= '<td class="px-3"><span class="font-medium">Scheme Code:</span> '. ($accountDetails->scheme_code != 'NA' ? $accountDetails->scheme_code : ERROR_VARS['notFound']) .'</td>';
+        $str .= '<td class="px-3"><span class="font-medium">Scheme Name:</span> '. string_operations(($accountDetails->scheme_name != 'NA' ? $accountDetails->scheme_name : ERROR_VARS['notFound']), 'upper') .'</td>';
+        $str .= '</tr>';
+        
+        $str .= '<tr>';
+        $str .= '<td class="px-3"><span class="font-medium">Account Number:</span> '. trim_str($accountDetails->account_no) .'</td>';
+        $str .= '<td class="px-3"><span class="font-medium">UCIC:</span> '. trim_str($accountDetails->ucic) .'</td>';
+        $str .= '<td class="px-3"><span class="font-medium">Account Open Date:</span> '. trim_str($accountDetails->account_opening_date) .'</td>';
+        $str .= '</tr>';
+        
+        if($dumpTable == 'dump_advances')
+        {
+            $str .= '<tr>';
+            $str .= '<td class="px-3"><span class="font-medium">Interest Rate:</span> '. get_decimal(trim_str($accountDetails->intrest_rate), 2) .'</td>';
+            $str .= '<td class="px-3"><span class="font-medium">Sanction Amount:</span> '. get_decimal(trim_str($accountDetails->sanction_amount), 2) .'</td>';
+            $str .= '<td class="px-3"><span class="font-medium">Outstanding Balance:</span> '. get_decimal(trim_str($accountDetails->outstanding_balance), 2) .'</td>';
+            $str .= '</tr>';
+            
+            $str .= '<tr>';
+            $str .= '<td class="px-3"><span class="font-medium">Customer Type:</span> '. trim_str($accountDetails->customer_type) .'</td>';
+            $str .= '<td class="px-3"><span class="font-medium">Due Date:</span> '. trim_str($accountDetails->due_date) .'</td>';
+            $str .= '<td class="px-3"><span class="font-medium">Balance As On:</span> '. trim_str($accountDetails->balance_date) .'</td>';
+            $str .= '</tr>';
+            
+            $str .= '<tr>';
+            $str .= '<td class="px-3"><span class="font-medium">NPA Status:</span> '. trim_str($accountDetails->npa_status) .'</td>';
+            if(!empty(trim_str($accountDetails->renewal_date)))
+                $str .= '<td class="px-3"><span class="font-medium">Renewal Date:</span> '. trim_str($accountDetails->renewal_date) .'</td>';
+            $str .= '<td class="px-3"><span class="font-medium">Account Status:</span> '. trim_str($accountDetails->account_status) .'</td>';
+            $str .= '</tr>';
+        }
+        else
+        {
+            // For deposits
+            $str .= '<tr>';
+            $str .= '<td class="px-3"><span class="font-medium">Interest Rate:</span> '. get_decimal(trim_str($accountDetails->intrest_rate), 2) .'</td>';
+            $str .= '<td class="px-3"><span class="font-medium">Principal Amount:</span> '. get_decimal(trim_str($accountDetails->principal_amount), 2) .'</td>';
+            $str .= '<td class="px-3"><span class="font-medium">Balance Amount:</span> '. get_decimal(trim_str($accountDetails->balance), 2) .'</td>';
+            $str .= '</tr>';
+            
+            $str .= '<tr>';
+            $str .= '<td class="px-3"><span class="font-medium">Balance Date:</span> '. trim_str($accountDetails->balance_date) .'</td>';
+            $str .= '<td class="px-3"><span class="font-medium">Maturity Date:</span> '. trim_str($accountDetails->maturity_date) .'</td>';
+            $str .= '<td class="px-3"><span class="font-medium">Maturity Amount:</span> '. trim_str($accountDetails->maturity_amount) .'</td>';
+            $str .= '</tr>';
+            
+            $str .= '<tr>';
+            $str .= '<td class="px-3"><span class="font-medium">Close Date:</span> '. trim_str($accountDetails->close_date) .'</td>';
+            $str .= '<td class="px-3"><span class="font-medium">Customer Type:</span> '. trim_str($accountDetails->customer_type) .'</td>';
+            $str .= '<td class="px-3"><span class="font-medium">Account Status:</span> '. trim_str($accountDetails->account_status) .'</td>';
+            $str .= '</tr>';
+        }
+        
+        return $str;
+    }
+}
 ?>
