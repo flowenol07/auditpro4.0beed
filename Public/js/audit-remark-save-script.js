@@ -1,4 +1,4 @@
-rmk_err_msg = 'Something went wrong! Please try after sometime.';
+// rmk_err_msg = 'Something went wrong! Please try after sometime.';
 
 function rmk_btn_click(btn)
 {

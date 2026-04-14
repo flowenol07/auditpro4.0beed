@@ -88,15 +88,15 @@ echo '<div class="card-body">' . "\n";
 /**
  * Show Toggle Button ONLY if audit_status_id == 5
  */
-if ($data['data']['assesmentData']->audit_status_id == 5 || $data['data']['assesmentData']->audit_status_id == 15) {
-    echo '<div class="mb-3 text-end">';
-    echo '<button type="button" 
-                class="btn btn-sm btn-secondary" 
-                id="toggleAllCompliance">
-            Show All Compliance Points
-          </button>';
-    echo '</div>';
-}
+// if ($data['data']['assesmentData']->audit_status_id == 5 || $data['data']['assesmentData']->audit_status_id == 15) {
+//     echo '<div class="mb-3 text-end">';
+//     echo '<button type="button" 
+//                 class="btn btn-sm btn-secondary" 
+//                 id="toggleAllCompliance">
+//             Show All Compliance Points
+//           </button>';
+//     echo '</div>';
+// }
 
 // Print generated table markup
 echo $gtMrk;

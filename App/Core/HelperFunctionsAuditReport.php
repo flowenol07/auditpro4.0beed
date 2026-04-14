@@ -1012,57 +1012,83 @@ if(!function_exists('generate_report_td_markup'))
         }
 
         // =============================================
-        // REMOVED: RO COLUMNS DISPLAY from here
-        // They are now handled by generate_report_ro_comment_columns function
+        // RO COLUMNS DISPLAY - For NON-RO users (Branch View Only)
+        // =============================================
+        // RO COLUMNS DISPLAY - For NON-RO users (Both Branch and Reviewers can view)
+        if( in_array($FILTER_TYPE, ['REARP', 'RECOM', 'RVAU', 'RVCOM']) && !$is_ro_user )
+        {   
+            // Display RO Review Status as text
+            if( $FILTER_TYPE == 'REARP' || $FILTER_TYPE == 'RVAU' ) {
+                $roStatusId = (isset($cAnsDetails->ro_audit_status_id) && !is_null($cAnsDetails->ro_audit_status_id) && $cAnsDetails->ro_audit_status_id != '') 
+                    ? $cAnsDetails->ro_audit_status_id 
+                    : 2;
+                
+                $roStatusText = array_key_exists($roStatusId, AUDIT_STATUS_ARRAY['compliance_review_action']) 
+                    ? AUDIT_STATUS_ARRAY['compliance_review_action'][$roStatusId] 
+                    : 'Pending RO Review';
+                
+                $str .= '<td>' . $roStatusText . '</td>';
+            } else {
+                $roStatusId = (isset($cAnsDetails->ro_compliance_status_id) && !is_null($cAnsDetails->ro_compliance_status_id) && $cAnsDetails->ro_compliance_status_id != '') 
+                    ? $cAnsDetails->ro_compliance_status_id 
+                    : 2;
+                
+                $roStatusText = array_key_exists($roStatusId, AUDIT_STATUS_ARRAY['compliance_review_action']) 
+                    ? AUDIT_STATUS_ARRAY['compliance_review_action'][$roStatusId] 
+                    : 'Pending RO Review';
+                
+                $str .= '<td>' . $roStatusText . '</td>';
+            }
+
+            // Display RO Comment as text
+            $roReviewerComment = (isset($cAnsDetails->ro_reviewer_comment) && !is_null($cAnsDetails->ro_reviewer_comment) && trim($cAnsDetails->ro_reviewer_comment) != '') 
+                ? trim_str($cAnsDetails->ro_reviewer_comment) 
+                : '-';
+            
+            $str .= '<td>' . $roReviewerComment . '<td>';
+
+            unset($roReviewerComment, $roStatusText);
+        }
+
+        // =============================================
+        // RO SPECIFIC COLUMNS - For RO users only (Editable)
         // =============================================
         
-        // RO SPECIFIC COLUMNS - For RO users only (Editable)
-        if (in_array($FILTER_TYPE, ['REARP', 'RECOM', 'RVCOM']) && $is_ro_user)
-{   
-    $roReviewActionArray = AUDIT_STATUS_ARRAY['compliance_review_action'];
-    
-    if ($FILTER_TYPE == 'REARP') {
-        $currentStatus = isset($cAnsDetails->ro_audit_status_id) ? $cAnsDetails->ro_audit_status_id : 2;
-        $actionType = 'ro_audit';
-    } else {
-        $currentStatus = isset($cAnsDetails->ro_compliance_status_id) ? $cAnsDetails->ro_compliance_status_id : 2;
-        $actionType = 'ro_compliance';
-    }
-    
-    // ✅ ACTION COLUMN
-    $str .= '<td width="160px" class="reviewer-action">
-        <select class="form-control form-select" 
-            data-ansid="'. encrypt_ex_data($cAnsDetails->id) .'" 
-            data-anstype="'. $type .'" 
-            data-slctact="'. $actionType .'">';
+        // RO REVIEW STATUS DROPDOWN (Editable for RO)
+        if( in_array($FILTER_TYPE, ['REARP', 'RECOM', 'RVCOM']) && $is_ro_user )
+        {   
+            $roReviewActionArray = AUDIT_STATUS_ARRAY['compliance_review_action'];
+            
+            if ($FILTER_TYPE == 'REARP') {
+                $currentStatus = isset($cAnsDetails->ro_audit_status_id) ? $cAnsDetails->ro_audit_status_id : 2;
+                $actionType = 'ro_audit';
+            } else {
+                $currentStatus = isset($cAnsDetails->ro_compliance_status_id) ? $cAnsDetails->ro_compliance_status_id : 2;
+                $actionType = 'ro_compliance';
+            }
+            
+            $str .= '<td width="160px" class="reviewer-action">
+                <select class="form-control form-select" data-ansid="'. encrypt_ex_data($cAnsDetails -> id) .'" data-anstype="'. $type .'" data-slctact="'. $actionType .'">';
+            
+            foreach($roReviewActionArray as $statusId => $statusLabel) {
+                $selected = ($currentStatus == $statusId) ? ' selected="selected"' : '';
+                $str .= '<option value="'. $statusId .'"'. $selected .'>'. $statusLabel .'</option>';
+            }
+            
+            $str .= '</select>
+                <small class="reponse-status d-block mt-1 mb-2"></small>
+            </td>' . "\n";
 
-    foreach ($roReviewActionArray as $statusId => $statusLabel) {
-        $selected = ($currentStatus == $statusId) ? ' selected="selected"' : '';
-        $str .= '<option value="'. $statusId .'"'. $selected .'>'. $statusLabel .'</option>';
-    }
+            // RO Reviewer Comment Textarea (Editable for RO)
+            $roReviewerComment = trim_str($cAnsDetails->ro_reviewer_comment ?? '');
+            $str .= '<td class="comment-container">
+                <textarea class="form-control" data-ansid="'. encrypt_ex_data($cAnsDetails -> id) .'" data-anstype="'. $type .'" data-slctact="'. $actionType .'_comment">'. $roReviewerComment .'</textarea>
+                <small class="reponse-status d-block mt-1 mb-2"></small>
+                <button class="btn btn-secondary btn-sm save-comment-btn">Save Comment</button>
+            </td>' . "\n";
 
-    $str .= '</select>
-        <small class="reponse-status d-block mt-1 mb-2"></small>
-    </td>' . "\n";   // ✅ FIXED (was wrong before)
-
-    // ✅ COMMENT COLUMN
-    $roReviewerComment = trim_str($cAnsDetails->ro_reviewer_comment ?? '');
-
-    $str .= '<td class="comment-container">
-        <textarea class="form-control" 
-            data-ansid="'. encrypt_ex_data($cAnsDetails->id) .'" 
-            data-anstype="'. $type .'" 
-            data-slctact="'. $actionType .'_comment">'. $roReviewerComment .'</textarea>
-        
-        <small class="reponse-status d-block mt-1 mb-2"></small>
-        
-        <button class="btn btn-secondary btn-sm save-comment-btn">
-            Save Comment
-        </button>
-    </td>' . "\n";
-
-    unset($roReviewerComment, $roReviewActionArray);
-}
+            unset($roReviewerComment, $roReviewActionArray);
+        }
 
         return $str;
     }
@@ -1122,55 +1148,7 @@ if(!function_exists('generate_report_risk_columns'))
         return $str;
     }
 }
-if(!function_exists('generate_report_ro_comment_columns'))
-{
-    function generate_report_ro_comment_columns($data, $FILTER_TYPE, $cAnsDetails, $onlyCols = false)
-    {
-        $str = '';
 
-        if($onlyCols)
-        {
-            if( in_array($FILTER_TYPE, ['REARP', 'ARCRP', 'CRPWC', 'RVAU', 'RVCOM', 'RECOM', 'PCDR']))
-                $str .= '<th>RO Review Status</th>';
-
-            if( in_array($FILTER_TYPE, ['REARP', 'ARCRP', 'CRPWC', 'RVAU', 'RVCOM', 'RECOM', 'PCDR']))
-                $str .= '<th>RO Comment</th>';
-
-            return $str;
-        }
-
-        // RO REVIEW STATUS
-        if( in_array($FILTER_TYPE, ['REARP', 'ARCRP', 'CRPWC', 'RVAU', 'RVCOM', 'RECOM', 'PCDR']))
-        {
-            $roStatusId = null;
-            if( in_array($FILTER_TYPE, ['REARP', 'RVAU']) ) {
-                $roStatusId = isset($cAnsDetails->ro_audit_status_id) ? $cAnsDetails->ro_audit_status_id : 2;
-            } else {
-                $roStatusId = isset($cAnsDetails->ro_compliance_status_id) ? $cAnsDetails->ro_compliance_status_id : 2;
-            }
-            
-            $roStatusText = 'Pending RO Review';
-            if(defined('AUDIT_STATUS_ARRAY') && isset(AUDIT_STATUS_ARRAY['compliance_review_action'][$roStatusId])) {
-                $roStatusText = AUDIT_STATUS_ARRAY['compliance_review_action'][$roStatusId];
-            }
-            
-            $str .= '<td>' . $roStatusText . '</td>';
-        }
-
-        // RO COMMENT
-        if( in_array($FILTER_TYPE, ['REARP', 'ARCRP', 'CRPWC', 'RVAU', 'RVCOM', 'RECOM', 'PCDR']))
-        {
-            $roComment = '-';
-            if(isset($cAnsDetails->ro_reviewer_comment) && !empty(trim($cAnsDetails->ro_reviewer_comment)))
-            {
-                $roComment = string_operations(trim($cAnsDetails->ro_reviewer_comment), 'upper');
-            }
-            $str .= '<td>' . $roComment . '</td>';
-        }
-
-        return $str;
-    }
-}
 if(!function_exists('generate_evidence_checkbox_markup'))
 { 
     //  function generate evidence checkbox markup
@@ -1261,16 +1239,20 @@ if(!function_exists('generate_display_questions_markup'))
 
                     if( in_array($FILTER_TYPE, ['REARP', 'RVAU', 'RVCOM', 'RECOM', 'PCDR']))
                         $str .= '<th>Reviewer Comment</th>';
-                    
-                    // ONLY show RO columns for these filter types - CALL THIS ONCE
-                    if( in_array($FILTER_TYPE, ['REARP', 'ARCRP', 'CRPWC', 'RVAU', 'RVCOM', 'RECOM']))
-                        $str .= generate_report_ro_comment_columns($data, $FILTER_TYPE, null, true);
-                }
+                    if( in_array($FILTER_TYPE, ['REARP', 'RVAU', 'RVCOM', 'RECOM']))
+                        $str .= '<th>RO Review Status</th>';
 
+                    if( in_array($FILTER_TYPE, ['REARP', 'RVAU', 'RVCOM', 'RECOM', 'PCDR']))
+                        $str .= '<th>RO Comment</th>';
+                }
+                
                 // For RO users: Show RO specific columns
                 if( $is_ro_user ) {
                     if( in_array($FILTER_TYPE, ['REARP', 'RECOM', 'RVCOM']))
-                        $str .= generate_report_ro_comment_columns($data, $FILTER_TYPE, null, true);
+                        $str .= '<th>RO Review Status</th>';
+                    
+                    if( in_array($FILTER_TYPE, ['REARP', 'RECOM', 'RVCOM', 'PCDR']))
+                        $str .= '<th>RO Comment</th>';
                 }
 
             $str .= '</tr>';
@@ -1415,27 +1397,20 @@ if(!function_exists('generate_display_questions_markup'))
                         $colSelect = 'compliance_status_id';
                     }
 
-                    // Replace the existing RO column data generation with:
-
-                    // For non-RO users
+                    // For non-RO users: Show review actions
                     if( !$is_ro_user ) {
-                        if( in_array($FILTER_TYPE, ['REARP', 'RVAU', 'RVCOM', 'RECOM']))
+                        if( in_array($FILTER_TYPE, ['COM', 'RECOM']) )
                             $str .= generate_report_td_markup($FILTER_TYPE, $cQueDetails, $reviewActionArray, $colSelect, 'gen');
-                        
-                        // CALL THIS ONCE for RO columns data
-                        if( in_array($FILTER_TYPE, ['REARP', 'ARCRP', 'CRPWC', 'RVAU', 'RVCOM', 'RECOM']))
-                            $str .= generate_report_ro_comment_columns($data, $FILTER_TYPE, $cQueDetails, false);
-                    }
 
-                    // For RO users
-                    if( $is_ro_user ) {
-                        if( in_array($FILTER_TYPE, ['REARP', 'RECOM', 'RVCOM']))
+                        if( in_array($FILTER_TYPE, ['REARP', 'RVCOM', 'RVAU']) )
                             $str .= generate_report_td_markup($FILTER_TYPE, $cQueDetails, $reviewActionArray, $colSelect, 'gen');
                         
-                        // For RO users, you might not need to show RO columns as display since they have edit controls
-                        // But if you need to show them, uncomment below:
-                        // if( in_array($FILTER_TYPE, ['REARP', 'RECOM', 'RVCOM']))
-                        //     $str .= generate_report_ro_comment_columns($data, $FILTER_TYPE, $cQueDetails, false);
+                    }
+                    
+                    // For RO users: Show RO specific markup
+                    if( $is_ro_user ) {
+                        if( in_array($FILTER_TYPE, ['REARP', 'RECOM', 'RVCOM']) )
+                            $str .= generate_report_td_markup($FILTER_TYPE, $cQueDetails, $reviewActionArray, $colSelect, 'gen');
                     }
 
                     // Evidence section for compliance

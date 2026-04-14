@@ -32,7 +32,7 @@ defined( 'REPORTS_VIEW' ) ?: define('REPORTS_VIEW', APP_VIEWS . DS . 'reports');
 defined( 'PUBLIC_ROOT' ) ?: define('PUBLIC_ROOT', dirname(__DIR__) . DS . 'Public');
 
 // Public URL
-defined( 'HOST' ) ?: define('HOST', 'http://192.168.1.33/');
+defined( 'HOST' ) ?: define('HOST', 'http://192.168.31.16/');
 defined( 'URL' ) ?: define('URL', HOST . 'auditpro4.0beed/');
 defined( 'PUBLIC_JS' ) ?: define('PUBLIC_JS', URL . 'js/');
 defined( 'IMAGES' ) ?: define('IMAGES', URL . 'images/');
@@ -43,7 +43,7 @@ defined( 'DATA_TABLE_AJX' ) ?: define('DATA_TABLE_AJX', 'data-table-ajx');
 // Multi-audit configuration with branches and default
 if (!defined('IS_MULTI_AUDIT')) {
     define('IS_MULTI_AUDIT', [
-        'isValid' => 0, // 1 = multi-DB enabled, 0 = single DB
+        'isValid' => 1, // 1 = multi-DB enabled, 0 = single DB
         'branches' => [
             'ndvs'  => ['db' => 'ndvs_25-26', 'label' => 'NDVS Bank'],
             'sutex' => ['db' => 'sutex', 'label' => 'Sutex Bank'],

@@ -486,67 +486,93 @@ private function findDataCount($type = 'audit')
     $this -> data['observation']['observation']['title'] = $title;
 }
     private function defaultAcceptAll($type = 'audit', $extra = [])
-    {
-        $status = isset($extra['status']) ? $extra['status'] : 2; // accepted
-        $updateArray = [ 'audit_status_id' => $status ];
-        $res = false;
-
-        $whereArray = [
-            'where' => 'assesment_id = :assesment_id AND deleted_at IS NULL',
-            'params' => [
-                'assesment_id' => $this -> assesmentData -> id,
-            ]
-        ];
-
-        if( $type != 'audit' )
-        {   
-            // for compliance
+{
+    $status = isset($extra['status']) ? $extra['status'] : 2; // accepted
+    $res = false;
+    
+    // Check if user is RO Officer
+    $empType = Session::get('emp_type');
+    $isROUser = ($empType == 16 && $this->assesmentData->audit_status_id == 15);
+    
+    // Determine which status column to update
+    if($isROUser) {
+        // For RO Officer - update RO status columns
+        if($type == 'audit') {
+            $updateArray = [ 'ro_audit_status_id' => $status ];
+        } else {
+            $updateArray = [ 'ro_compliance_status_id' => $status ];
+        }
+    } else {
+        // For regular reviewers
+        if($type != 'audit') {   
             $updateArray = [ 'compliance_status_id' => $status ];
-
-            if( !isset($extra['forceAll']) )
+        } else {
+            $updateArray = [ 'audit_status_id' => $status ];
+        }
+    }
+    
+    $whereArray = [
+        'where' => 'assesment_id = :assesment_id AND deleted_at IS NULL',
+        'params' => [ 'assesment_id' => $this->assesmentData->id ]
+    ];
+    
+    // Only add the status filter if NOT forcing all
+    if(!isset($extra['forceAll'])) {
+        if($isROUser) {
+            if($type == 'audit') {
+                $whereArray['where'] .= ' AND ro_audit_status_id = "0"';
+            } else {
+                $whereArray['where'] .= ' AND ro_compliance_status_id = "0"';
+            }
+        } else {
+            if($type != 'audit') {
                 $whereArray['where'] .= ' AND compliance_status_id = "0"';
+            } else {
+                $whereArray['where'] .= ' AND audit_status_id = "0"';
+            }
         }
-        else if( !isset($extra['forceAll']) )
-            $whereArray['where'] .= ' AND audit_status_id = "0"';
-
-        if( !isset($extra['forceAll']) )
-        {
-            // executive summary branch position default accept 0 to 2
-            $result = $this -> esbpModel::update(
-                $this -> esbpModel -> getTableName(), 
-                $updateArray, $whereArray
-            );
-
-            // executive summary fresh accounts default accept 0 to 2
-            $result = $this -> esfaModel::update(
-                $this -> esfaModel -> getTableName(), 
-                $updateArray, $whereArray
-            );
-        }
-
-        // only compliance points set default action like isset($extra['forceAll']) 02.09.2024
-        $adWhere = $whereArray;
-        
-        if( isset($extra['forceAll']) )
-            $adWhere['where'] .= ' AND is_compliance = "1"';
-
-        // for answer data // here we accept all answer like no compliance answers also
-        $result = $this -> answerDataModel::update(
-            $this -> answerDataModel -> getTableName(), 
-            $updateArray, $adWhere
-        );
-
-        // for answer data annexure 
-        $result2 = $this -> answerDataAnnexureModel::update(
-            $this -> answerDataAnnexureModel -> getTableName(), 
+    }
+    
+    // Skip ESBP/ESFA for RO users as they don't have RO columns
+    if(!$isROUser && !isset($extra['forceAll'])) {
+        // executive summary branch position default accept 0 to 2
+        $this->esbpModel::update(
+            $this->esbpModel->getTableName(), 
             $updateArray, $whereArray
         );
-
-        if( $result !== false /*&& $result2 !== false*/ )
-            $res = true;
-
-        return $res;
+        
+        // executive summary fresh accounts default accept 0 to 2
+        $this->esfaModel::update(
+            $this->esfaModel->getTableName(), 
+            $updateArray, $whereArray
+        );
     }
+    
+    // For answer data
+    $adWhere = $whereArray;
+    if(isset($extra['forceAll'])) {
+        $adWhere['where'] .= ' AND is_compliance = "1"';
+    }
+    
+    $result = $this->answerDataModel::update(
+        $this->answerDataModel->getTableName(), 
+        $updateArray, $adWhere
+    );
+    
+    // For answer data annexure - skip for RO since annexure doesn't have RO columns
+    if(!$isROUser) {
+        $this->answerDataAnnexureModel::update(
+            $this->answerDataAnnexureModel->getTableName(), 
+            $updateArray, $whereArray
+        );
+    }
+    
+    if($result !== false) {
+        $res = true;
+    }
+    
+    return $res;
+}
 
     private function observationActionValidation()
     {
