@@ -1000,7 +1000,14 @@ public function submitComplianceReview() {
             Except::exc_access_restrict();
             exit;
         }
-
+        $empType = Session::get('emp_type');
+            if($empType == 16 && $this->assesmentData->audit_status_id == 15) {
+                // RO Officer - default accept all using RO status columns
+                $this->defaultAcceptAllForRO();
+            } else {
+                // Regular reviewer - default accept all compliance points
+                $this->defaultAcceptAll('compliance');
+            }
         // default accept all compliance points
         $this->defaultAcceptAll('compliance');
 
@@ -1045,61 +1052,95 @@ private function findRODataCount()
     }
 
     $this->data['ro_observation'] = [
-        'observation' => [ 'accepted' => 0, 'rejected' => 0 ],
+        'observation' => [ 'accepted' => 0, 'rejected' => 0, 'total' => 0 ],
     ];
 
-    // Use direct value concatenation instead of named parameters
     $assesmentId = $this->assesmentData->id;
     
-    // Count RO Audit Status
-    $sql = "SELECT ro_audit_status_id, COUNT(*) as count 
-            FROM " . $this->answerDataModel->getTableName() . "
-            WHERE assesment_id = {$assesmentId}
-              AND is_compliance = 1 
-              AND ro_audit_status_id IN (2,3)
-              AND deleted_at IS NULL 
-            GROUP BY ro_audit_status_id";
+    // First check if there are ANY observations
+    $checkSql = "SELECT COUNT(*) as total 
+                 FROM " . $this->answerDataModel->getTableName() . "
+                 WHERE assesment_id = {$assesmentId}
+                   AND is_compliance = 1 
+                   AND deleted_at IS NULL";
     
-    $result = get_all_data_query_builder(2, $this->answerDataModel, $this->answerDataModel->getTableName(), [
+    $checkResult = get_all_data_query_builder(1, $this->answerDataModel, $this->answerDataModel->getTableName(), [
         'params' => []
-    ], 'sql', $sql);
+    ], 'sql', $checkSql);
     
-    if(is_array($result) && sizeof($result) > 0)
-    {
-        foreach($result as $row)
-        {
-            if($row->ro_audit_status_id == 2)
-                $this->data['ro_observation']['observation']['accepted'] += $row->count;
-            else if($row->ro_audit_status_id == 3)
-                $this->data['ro_observation']['observation']['rejected'] += $row->count;
-        }
+    $totalObservations = is_object($checkResult) ? (int)$checkResult->total : 0;
+    
+    if($totalObservations == 0) {
+        // No observations found
+        $this->data['ro_observation']['observation']['accepted'] = 0;
+        $this->data['ro_observation']['observation']['rejected'] = 0;
+        $this->data['ro_observation']['observation']['total'] = 0;
+        $this->data['ro_observation']['observation']['title'] = 'Total Compliance Observations (RO Review)';
+        $this->data['ro_observation']['observation']['no_data'] = true;
+        return;
     }
-
-    // Count RO Compliance Status
-    $sql = "SELECT ro_compliance_status_id, COUNT(*) as count 
-            FROM " . $this->answerDataModel->getTableName() . "
-            WHERE assesment_id = {$assesmentId}
-              AND is_compliance = 1 
-              AND ro_compliance_status_id IN (2,3)
-              AND deleted_at IS NULL 
-            GROUP BY ro_compliance_status_id";
     
-    $result = get_all_data_query_builder(2, $this->answerDataModel, $this->answerDataModel->getTableName(), [
+    // Get rejected count from RO Audit Status
+    $rejectedSql = "SELECT COUNT(*) as rejected 
+                    FROM " . $this->answerDataModel->getTableName() . "
+                    WHERE assesment_id = {$assesmentId}
+                      AND is_compliance = 1 
+                      AND ro_audit_status_id = 3
+                      AND deleted_at IS NULL";
+    
+    $rejectedResult = get_all_data_query_builder(1, $this->answerDataModel, $this->answerDataModel->getTableName(), [
         'params' => []
-    ], 'sql', $sql);
+    ], 'sql', $rejectedSql);
     
-    if(is_array($result) && sizeof($result) > 0)
-    {
-        foreach($result as $row)
-        {
-            if($row->ro_compliance_status_id == 2)
-                $this->data['ro_observation']['observation']['accepted'] += $row->count;
-            else if($row->ro_compliance_status_id == 3)
-                $this->data['ro_observation']['observation']['rejected'] += $row->count;
-        }
-    }
+    $rejectedCount = is_object($rejectedResult) ? (int)$rejectedResult->rejected : 0;
+    
+    // Get rejected count from RO Compliance Status
+    $rejectedSql2 = "SELECT COUNT(*) as rejected 
+                     FROM " . $this->answerDataModel->getTableName() . "
+                     WHERE assesment_id = {$assesmentId}
+                       AND is_compliance = 1 
+                       AND ro_compliance_status_id = 3
+                       AND deleted_at IS NULL";
+    
+    $rejectedResult2 = get_all_data_query_builder(1, $this->answerDataModel, $this->answerDataModel->getTableName(), [
+        'params' => []
+    ], 'sql', $rejectedSql2);
+    
+    $rejectedCount += is_object($rejectedResult2) ? (int)$rejectedResult2->rejected : 0;
+    
+    // Accepted = Total - Rejected
+    $this->data['ro_observation']['observation']['accepted'] = $totalObservations - $rejectedCount;
+    $this->data['ro_observation']['observation']['rejected'] = $rejectedCount;
+    $this->data['ro_observation']['observation']['total'] = $totalObservations;
 
     $this->data['ro_observation']['observation']['title'] = 'Total Compliance Observations (RO Review)';
+}private function defaultAcceptAllForRO()
+{
+    // Update answer_data table - RO Audit Status
+    $this->answerDataModel::update(
+        $this->answerDataModel->getTableName(),
+        [
+            'ro_audit_status_id' => 2,  // Default accepted
+            'ro_review_emp_id' => $this->empId
+        ],
+        [
+            'where' => 'assesment_id = :assesment_id AND is_compliance = 0 AND (ro_audit_status_id = 0 OR ro_audit_status_id IS NULL) AND deleted_at IS NULL',
+            'params' => ['assesment_id' => $this->assesmentData->id]
+        ]
+    );
+    
+    // Update answer_data table - RO Compliance Status
+    $this->answerDataModel::update(
+        $this->answerDataModel->getTableName(),
+        [
+            'ro_compliance_status_id' => 2,  // Default accepted
+            'ro_review_emp_id' => $this->empId
+        ],
+        [
+            'where' => 'assesment_id = :assesment_id AND is_compliance = 1 AND (ro_compliance_status_id = 0 OR ro_compliance_status_id IS NULL) AND deleted_at IS NULL',
+            'params' => ['assesment_id' => $this->assesmentData->id]
+        ]
+    );
 }
 private function findROCountAssign($statusCol, $model, $type = 'answer_data') 
 {

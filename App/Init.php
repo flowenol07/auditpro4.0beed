@@ -50,7 +50,10 @@ if (!defined('IS_MULTI_AUDIT')) {
             'ajara' => ['db' => 'ajara_25_26', 'label' => 'Ajara Bank'],
 			'veershaiv_24_25' => ['db' => 'veershaiv_24_25', 'label' => 'Veershaive Bank 24-25'],
 			'veershaiv_25_26' => ['db' => 'veershaiv_25_26', 'label' => 'Veershaive Bank 25-26'],
-			'deccan' => ['db' => 'deccan', 'label' => 'Deccan Bank'],
+			'deccan' => ['db' => 'deccan_performance', 'label' => 'Deccan Bank'],
+			'knsb_final' => ['db' => 'knsb_final', 'label' => 'KNSB Bank'],
+			'ahmednagar' => ['db' => 'concurrent_ahamadnagar', 'label' => 'Ahmednagar Bank'],
+
         ],
         'default' => $_SESSION['audit-type'] ?? 'deccan',
     ]);

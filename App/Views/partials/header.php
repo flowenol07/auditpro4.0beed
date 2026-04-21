@@ -353,21 +353,21 @@ if(isset($data['userDetails']['emp_type'])):
       'url' => $data['siteUrls']::getUrl('dateChange') 
     ];
   }
-  //super admin - dashboard only
-  elseif(in_array($data['userDetails']['emp_type'], [11,3,2,4,1,9]))
-{
-    // for super admin menu - Calendar
-    $menuArray[] = [ 
-        'id' => 'superAdminDashboard', 
-        'title' => 'Calendar',  // Changed from "Calender" to "Calendar"
-        'url' => $data['siteUrls']::getUrl('superAdminDashboard') 
-    ];
-     $menuArray[] = [
-        'id' => 'reports', 
-        'title' => 'Reports', 
-        'url' => $data['siteUrls']::getUrl('reports')
-      ];
-}
+//   //super admin - dashboard only
+//   elseif(in_array($data['userDetails']['emp_type'], [11,3,2,4,1,9]))
+// {
+//     // for super admin menu - Calendar
+//     $menuArray[] = [ 
+//         'id' => 'superAdminDashboard', 
+//         'title' => 'Calendar',  // Changed from "Calender" to "Calendar"
+//         'url' => $data['siteUrls']::getUrl('superAdminDashboard') 
+//     ];
+//      $menuArray[] = [
+//         'id' => 'reports', 
+//         'title' => 'Reports', 
+//         'url' => $data['siteUrls']::getUrl('reports')
+//       ];
+// }
 endif;
 
 ?>
