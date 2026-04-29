@@ -106,7 +106,7 @@ class ComplianceContoller extends Controller  {
             $auditAssesmentTimelineCount = ($auditAssesmentTimelineCount >= $this -> assesmentData -> compliance_review_reject_limit) ? 1 : 0;
 
             // add key in update array
-            $assesmentUpdateArray['is_limit_blocked'] = $auditAssesmentTimelineCount;
+            // $assesmentUpdateArray['is_limit_blocked'] = $auditAssesmentTimelineCount;
         }
 
         // print_r($assesmentUpdateArray);
